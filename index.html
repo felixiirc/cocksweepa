@@ -1,0 +1,563 @@
+<meta charset="utf-8">
+<title>Cock Sweepa — UI Mockup</title>
+<style>
+  :root {
+    --night:   #0b0e0a;
+    --night-2: #0f130d;
+    --panel:   #0c100b;
+    --panel-2: #141a11;
+    --border:  #39412f;
+    --border-2:#79816f;
+    --ink:     #e6e8e2;
+    --ink-mid: #a8b0a0;
+    --ink-soft:#68705f;
+    --rose:    #c8232c;
+    --rose-2:  #e03a40;
+    --violet:  #3a4236;
+    --heat:    #e03a40;
+    --warm:    #7a3a2a;
+    --cold:    #26301f;
+    --dead:    #14180f;
+    --gold:    #ffd23f;
+    --mint:    #ffd23f;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; }
+  body { background: var(--night); color: var(--ink); font-family: var(--mono); font-size: 13px; }
+  canvas { image-rendering: pixelated; }
+
+  /* ---------- board ---------- */
+  #board { position: fixed; inset: 0; cursor: grab; touch-action: none; }
+  #board.dragging { cursor: grabbing; }
+
+  /* CRT overlay */
+  .crt { position: fixed; inset: 0; pointer-events: none; z-index: 40;
+    background:
+      repeating-linear-gradient(0deg, rgba(0,0,0,.14) 0 1px, transparent 1px 3px),
+      radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(3,5,2,.55) 100%);
+    mix-blend-mode: multiply; }
+
+  /* ---------- HUD ---------- */
+  .hud { position: fixed; top: 0; left: 0; right: 0; z-index: 60; display: flex; gap: 8px;
+    padding: 10px 12px; align-items: stretch; pointer-events: none; flex-wrap: wrap; }
+  .hud > * { pointer-events: auto; }
+  .stat { display: flex; align-items: center; gap: 8px; background: rgba(10,13,8,.92);
+    border: 2px solid var(--border-2); padding: 7px 12px; box-shadow: 0 3px 0 rgba(0,0,0,.45);
+    font-size: 12px; letter-spacing: .06em; white-space: nowrap; }
+  .stat b { color: var(--ink); font-weight: 700; font-variant-numeric: tabular-nums; }
+  .stat .lbl { color: var(--ink-soft); font-size: 10px; letter-spacing: .14em; }
+  .stat.hot b { color: var(--heat); }
+  .stat.gold b { color: var(--gold); }
+  .hud-spacer { flex: 1; }
+  .btn { font-family: var(--mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase;
+    border: 2px solid #000; padding: 9px 16px; cursor: pointer; color: #fff; font-weight: 700;
+    box-shadow: 0 3px 0 rgba(0,0,0,.5), inset 0 2px 0 rgba(255,255,255,.18); }
+  .btn:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0,0,0,.5); }
+  .btn.rose { background: var(--rose); }
+  .btn.rose:hover { background: var(--rose-2); }
+  .btn.violet { background: var(--violet); }
+  .btn.ghost { background: rgba(10,13,8,.92); border-color: var(--border-2); color: var(--ink-mid);
+    box-shadow: 0 3px 0 rgba(0,0,0,.45); }
+
+  /* ---------- rip rail ---------- */
+  .rail { position: fixed; top: 64px; right: 12px; bottom: 12px; width: 300px; z-index: 55;
+    display: flex; flex-direction: column; gap: 10px; }
+  .panel { background: rgba(10,13,8,.94); border: 2px solid var(--border-2);
+    box-shadow: 0 4px 0 rgba(0,0,0,.5); padding: 14px; }
+  .panel h3 { margin: 0 0 10px; font-size: 10px; letter-spacing: .2em; color: var(--ink-soft); font-weight: 700; }
+  .qty-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .qty-btn { width: 40px; height: 40px; background: var(--panel-2); border: 2px solid var(--border-2);
+    color: var(--ink); font-size: 18px; font-family: var(--mono); cursor: pointer; font-weight: 700; }
+  .qty-btn:hover { border-color: var(--rose); color: var(--rose-2); }
+  .qty-num { font-size: 30px; font-weight: 700; text-align: center; }
+  .qty-num small { display: block; font-size: 9px; letter-spacing: .22em; color: var(--ink-soft); }
+  .presets { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; margin-bottom: 12px; }
+  .preset { padding: 7px 0; text-align: center; background: var(--panel-2); border: 2px solid var(--border);
+    color: var(--ink-mid); cursor: pointer; font-family: var(--mono); font-size: 11px; font-weight: 700; }
+  .preset.on { border-color: var(--rose); color: var(--rose-2); background: #260f0d; }
+  .total { display: flex; justify-content: space-between; align-items: baseline;
+    border-top: 2px solid var(--border); padding-top: 10px; margin-bottom: 12px; }
+  .total .lbl { color: var(--ink-soft); font-size: 10px; letter-spacing: .18em; }
+  .total b { font-size: 19px; color: var(--mint); font-variant-numeric: tabular-nums; }
+  .total span.sol { color: var(--ink-soft); font-size: 11px; margin-left: 6px; }
+  .rip-cta { width: 100%; padding: 13px 0; font-size: 13px; }
+  .rails-note { margin-top: 9px; text-align: center; font-size: 9px; letter-spacing: .12em;
+    color: var(--ink-soft); text-transform: uppercase; }
+  .rails-note b { color: var(--ink-mid); }
+
+  /* feed */
+  .feed { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+  .feed-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; scrollbar-width: thin; }
+  .fe { display: flex; align-items: center; gap: 9px; padding: 7px 8px; background: var(--panel-2);
+    border: 1px solid var(--border); font-size: 11px; }
+  .fe .spr { width: 28px; height: 28px; flex: none; background: var(--dead); border: 1px solid var(--border-2); }
+  .fe .who { flex: 1; min-width: 0; }
+  .fe .who .n { color: var(--ink); font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .fe .who .m { color: var(--ink-soft); font-size: 9px; letter-spacing: .06em; }
+  .fe .tag { font-size: 8px; letter-spacing: .1em; padding: 3px 6px; border: 1px solid; flex: none; font-weight: 700; }
+  .tag.common { color: var(--ink-soft); border-color: var(--border-2); }
+  .tag.uncommon { color: #7fbf5f; border-color: #2c4a22; }
+  .tag.rare { color: #5f9fd8; border-color: #274a70; }
+  .tag.epic { color: #a071d8; border-color: #4d3373; }
+  .tag.legendary { color: #e0923f; border-color: #714a22; }
+  .tag.mythic { color: var(--gold); border-color: #7a621a; }
+  .fe.find { border-color: var(--gold); background: #262008; }
+  .fe.find .who .n { color: var(--gold); }
+  .fe.burial { border-color: var(--rose); background: #2a0f0c; }
+  .fe.burial .who .n { color: var(--rose-2); }
+
+  /* minimap + legend */
+  .minimap { position: fixed; left: 12px; bottom: 12px; z-index: 55; background: rgba(10,13,8,.94);
+    border: 2px solid var(--border-2); box-shadow: 0 4px 0 rgba(0,0,0,.5); padding: 8px; }
+  .minimap .cap { font-size: 8px; letter-spacing: .18em; color: var(--ink-soft); margin-top: 6px; text-align: center; }
+  .legend { position: fixed; left: 12px; bottom: 196px; z-index: 55; background: rgba(10,13,8,.94);
+    border: 2px solid var(--border-2); padding: 9px 11px; display: flex; flex-direction: column; gap: 6px;
+    font-size: 9px; letter-spacing: .12em; box-shadow: 0 4px 0 rgba(0,0,0,.5); }
+  .legend div { display: flex; align-items: center; gap: 8px; color: var(--ink-mid); }
+  .sw { width: 11px; height: 11px; border: 1px solid rgba(255,255,255,.15); flex: none; }
+
+  /* tooltip */
+  #tip { position: fixed; z-index: 70; pointer-events: none; background: #000; border: 1px solid var(--border-2);
+    color: var(--ink-mid); font-size: 10px; padding: 4px 8px; display: none; letter-spacing: .08em; white-space: nowrap; }
+
+  /* ---------- gate ---------- */
+  .gate { position: fixed; inset: 0; z-index: 100; background:
+      radial-gradient(ellipse at 50% 30%, #1a2414 0%, #0e1309 55%, #070905 100%);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; }
+  .gate.hidden { display: none; }
+  .gate .sub { font-size: 12px; letter-spacing: .34em; color: var(--ink-mid); text-transform: uppercase; }
+  .gate .sub b { color: var(--gold); }
+  .gate .fine { font-size: 10px; letter-spacing: .2em; color: var(--ink-soft); text-transform: uppercase; }
+  .gate .fine b { color: var(--ink-mid); }
+  .gate .start { margin-top: 10px; font-size: 15px; padding: 14px 34px; }
+  @media (prefers-reduced-motion: no-preference) {
+    .gate .start { animation: pulse 1.6s ease-in-out infinite; }
+    @keyframes pulse { 50% { box-shadow: 0 3px 0 rgba(0,0,0,.5), 0 0 22px rgba(200,35,44,.6); } }
+    .fe.enter { animation: slidein .25s ease-out; }
+    @keyframes slidein { from { transform: translateX(14px); opacity: 0; } }
+  }
+
+  /* ---------- reveal modal ---------- */
+  .modal { position: fixed; inset: 0; z-index: 90; background: rgba(6,3,14,.8); display: none;
+    align-items: center; justify-content: center; }
+  .modal.open { display: flex; }
+  .card { background: linear-gradient(180deg, #161b12, #0c0f0a); border: 3px solid var(--border-2);
+    box-shadow: 0 8px 0 rgba(0,0,0,.6), 0 0 60px rgba(122,140,100,.18); padding: 22px; width: 300px; text-align: center; }
+  .card.mythic-glow { border-color: var(--gold); box-shadow: 0 8px 0 rgba(0,0,0,.6), 0 0 70px rgba(255,210,63,.35); }
+  .card .spr-big { width: 168px; height: 168px; margin: 6px auto 14px; background: var(--dead);
+    border: 2px solid var(--border-2); display: block; }
+  .card h2 { margin: 0 0 4px; font-size: 16px; letter-spacing: .08em; }
+  .card .coords { color: var(--ink-soft); font-size: 11px; letter-spacing: .14em; margin-bottom: 10px; }
+  .card .tag { display: inline-block; margin-bottom: 14px; }
+  .card .heatline { font-size: 10px; letter-spacing: .14em; color: var(--ink-soft); margin-bottom: 16px; text-transform: uppercase; }
+  .card .heatline b.h { color: var(--heat); } .card .heatline b.w { color: var(--warm); }
+  .card .heatline b.c { color: #8f7cc9; } .card .heatline b.d { color: var(--ink-soft); }
+  .card .row { display: flex; gap: 8px; }
+  .card .row .btn { flex: 1; padding: 11px 0; font-size: 11px; }
+
+  @media (max-width: 760px) {
+    .rail { top: auto; left: 12px; right: 12px; bottom: 12px; width: auto; max-height: 46vh; }
+    .legend, .minimap { display: none; }
+  }
+</style>
+
+<div id="app">
+  <canvas id="board"></canvas>
+  <div class="crt"></div>
+
+  <!-- HUD -->
+  <div class="hud">
+    <div class="stat"><span class="lbl">RIPPED</span> <b id="hud-ripped">412,882</b><span style="color:var(--ink-soft)">/1M</span></div>
+    <div class="stat"><span class="lbl">PRICE</span> <b style="color:var(--mint)">$2</b><span style="color:var(--ink-soft);font-size:10px" id="tier-note">· $3 AT 500K</span></div>
+    <div class="stat gold"><span class="lbl">GRAILS</span> <b>61<span style="color:var(--ink-soft)">/214</span></b></div>
+    <div class="stat hot"><span class="lbl">HOT ZONES</span> <b id="hud-hot">3</b></div>
+    <div class="hud-spacer"></div>
+    <button class="btn ghost" id="snd">&#9836;</button>
+    <button class="btn ghost">?</button>
+    <button class="btn rose">CONNECT WALLET</button>
+  </div>
+
+  <!-- rip rail -->
+  <div class="rail">
+    <div class="panel">
+      <h3>RIP COCKS</h3>
+      <div class="qty-row">
+        <button class="qty-btn" id="q-minus">&minus;</button>
+        <div class="qty-num"><span id="qty">10</span><small>RIPS</small></div>
+        <button class="qty-btn" id="q-plus">+</button>
+      </div>
+      <div class="presets" id="presets">
+        <div class="preset">1</div><div class="preset">5</div><div class="preset on">10</div>
+        <div class="preset">25</div><div class="preset">50</div><div class="preset">100</div>
+      </div>
+      <div class="total"><span class="lbl">TOTAL</span><span><b id="total">$20</b><span class="sol" id="total-sol">0.13 ◎</span></span></div>
+      <button class="btn rose rip-cta">CONNECT WALLET TO RIP</button>
+      <div class="rails-note">UP TO 100 RIPS · ONE APPROVAL<br>PAYMENTS BY <b>BLINK</b> · PRIZES BY <b>KIMJI</b></div>
+    </div>
+    <div class="panel feed">
+      <h3>LIVE RIPS</h3>
+      <div class="feed-list" id="feed"></div>
+    </div>
+  </div>
+
+  <!-- minimap + legend -->
+  <div class="legend">
+    <div><span class="sw" style="background:var(--heat)"></span>HOT &le;10</div>
+    <div><span class="sw" style="background:var(--warm)"></span>WARM &le;30</div>
+    <div><span class="sw" style="background:var(--cold)"></span>COLD &le;75</div>
+    <div><span class="sw" style="background:var(--dead)"></span>FROZEN</div>
+    <div><span class="sw" style="background:var(--gold)"></span>GRAIL FOUND</div>
+  </div>
+  <div class="minimap">
+    <canvas id="mini" width="150" height="150"></canvas>
+    <div class="cap">1000 &times; 1000 · DRAG TO PAN</div>
+  </div>
+
+  <div id="tip"></div>
+
+  <!-- reveal modal -->
+  <div class="modal" id="modal">
+    <div class="card" id="card">
+      <canvas class="spr-big" id="card-spr" width="168" height="168"></canvas>
+      <h2 id="card-name">COCK</h2>
+      <div class="coords" id="card-coords">(000, 000)</div>
+      <span class="tag common" id="card-tag">COMMON</span>
+      <div class="heatline" id="card-heat">NEAREST GRAIL: <b class="c">COLD</b></div>
+      <div class="row">
+        <button class="btn violet" id="card-close">TO THE MAP</button>
+        <button class="btn rose" id="card-again">RIP AGAIN</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- gate -->
+  <div class="gate" id="gate">
+    <canvas id="logo"></canvas>
+    <div class="sub">1,000,000 COCKS &middot; ONE GRID &middot; <b>214 BURIED GRAILS</b></div>
+    <button class="btn rose start" id="start">START RIPPING COCK</button>
+    <div class="fine">A TREASURE-HUNT MINT &middot; EVERY RIP IS A CLUE &middot; POWERED BY <b>BLINK</b> &times; <b>KIMJI</b></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------- tiny 3x5 pixel font (title) ---------- */
+  var GLYPH = {
+    A:{w:3,r:[2,5,7,5,5]}, C:{w:3,r:[3,4,4,4,3]}, E:{w:3,r:[7,4,6,4,7]}, K:{w:3,r:[5,5,6,5,5]},
+    O:{w:3,r:[2,5,5,5,2]}, P:{w:3,r:[6,5,6,4,4]}, S:{w:3,r:[3,4,2,1,6]},
+    W:{w:5,r:[17,17,21,21,10]}, ' ':{w:2,r:[0,0,0,0,0]}
+  };
+  function drawPixelText(cv, text, scale, color, shadow) {
+    var chars = text.split(''), w = 0;
+    chars.forEach(function (c) { w += (GLYPH[c] || GLYPH[' ']).w + 1; });
+    cv.width = w * scale; cv.height = 7 * scale;
+    cv.style.width = cv.width + 'px'; cv.style.height = cv.height + 'px';
+    var ctx = cv.getContext('2d'), x = 0;
+    chars.forEach(function (c) {
+      var g = GLYPH[c] || GLYPH[' '];
+      for (var r = 0; r < 5; r++) for (var b = 0; b < g.w; b++) {
+        if (g.r[r] & (1 << (g.w - 1 - b))) {
+          ctx.fillStyle = shadow; ctx.fillRect((x + b) * scale + scale, r * scale + scale, scale, scale);
+          ctx.fillStyle = color; ctx.fillRect((x + b) * scale, r * scale, scale, scale);
+        }
+      }
+      x += g.w + 1;
+    });
+  }
+  var logo = document.getElementById('logo');
+  drawPixelText(logo, 'COCK SWEEPA', Math.min(13, Math.floor(innerWidth / 46)), '#d8dcd0', '#232b1e');
+
+  /* ---------- sprites ---------- */
+  var SPR = {
+    common: { c: '#aab2a0', p: ['..##...','..##...','...#...','...#...','...#...','.##.##.','.##.##.'] },
+    rooster:{ c: null,      p: ['...#...','..###..','..#.##.','.####..','#.###..','..##.#.','..##...'] },
+    punk:   { c: '#8fd8c8', p: ['.#####.','.#####.','.#.#.#.','.#####.','.##..#.','.#####.','..###..'] }
+  };
+  var TIER_COLORS = { uncommon:'#7fbf5f', rare:'#5f9fd8', epic:'#a071d8', legendary:'#e0923f', mythic:'#ffd23f' };
+  function drawSprite(ctx, spr, x, y, size, color) {
+    var px = size / 9, p = spr.p;
+    ctx.fillStyle = color || spr.c;
+    for (var r = 0; r < 7; r++) for (var cIdx = 0; cIdx < 7; cIdx++)
+      if (p[r][cIdx] === '#') ctx.fillRect(x + (cIdx + 1) * px, y + (r + 1) * px, px + .5, px + .5);
+  }
+
+  /* ---------- world model ---------- */
+  var W = 1000, H = 1000;
+  function hash(x, y, s) {
+    var h = (x * 374761393 + y * 668265263 + s * 1442695041) | 0;
+    h = (h ^ (h >> 13)) | 0; h = Math.imul(h, 1274126177); h = (h ^ (h >> 16)) >>> 0;
+    return h / 4294967296;
+  }
+  // swarm centers (ripped density) + treasures
+  var SWARMS = [ {x:211,y:388,r:18,d:.95}, {x:240,y:400,r:13,d:.85}, {x:520,y:505,r:14,d:.6},
+                 {x:790,y:130,r:12,d:.5},  {x:95,y:705,r:11,d:.45}, {x:430,y:300,r:22,d:.3},
+                 {x:600,y:700,r:16,d:.25} ];
+  var FOUND = [ {x:211,y:388,name:'PUNK'} ];
+  var UNFOUND = [ {x:236,y:402},{x:523,y:509},{x:794,y:126},{x:91,y:709},{x:648,y:222},{x:333,y:840} ];
+  function density(x, y) {
+    var d = .12;
+    for (var i = 0; i < SWARMS.length; i++) {
+      var s = SWARMS[i], dx = x - s.x, dy = y - s.y, dist2 = dx*dx + dy*dy;
+      d += s.d * Math.exp(-dist2 / (2 * s.r * s.r));
+    }
+    return Math.min(d, .97);
+  }
+  function chebNearest(x, y) {
+    var best = 1e9;
+    for (var i = 0; i < UNFOUND.length; i++) {
+      var d = Math.max(Math.abs(x - UNFOUND[i].x), Math.abs(y - UNFOUND[i].y));
+      if (d < best) best = d;
+    }
+    return best;
+  }
+  function band(x, y) {
+    var d = chebNearest(x, y);
+    return d <= 10 ? 'hot' : d <= 30 ? 'warm' : d <= 75 ? 'cold' : 'frozen';
+  }
+  var BAND_BG = { hot:'#3d1210', warm:'#2c1a10', cold:'#1c2415', frozen:'#14180f' };
+  var BAND_EDGE = { hot:'#e03a40', warm:'#7a3a2a', cold:'#33412a', frozen:'#39412f' };
+
+  var userRips = {}; // "x,y" -> outcome
+  function outcomeAt(x, y) {
+    var r = hash(x, y, 7);
+    if (r < .95) return { kind:'common' };
+    var t = hash(x, y, 11);
+    var tier = t < .76 ? 'uncommon' : t < .94 ? 'rare' : t < .988 ? 'epic' : t < .999 ? 'legendary' : 'mythic';
+    return { kind:'rooster', tier: tier };
+  }
+  function stateAt(x, y) {
+    for (var i = 0; i < FOUND.length; i++) if (FOUND[i].x === x && FOUND[i].y === y) return { kind:'found', name: FOUND[i].name };
+    var u = userRips[x + ',' + y];
+    if (u) return u;
+    if (hash(x, y, 3) < density(x, y)) return outcomeAt(x, y);
+    return { kind:'fog' };
+  }
+
+  /* ---------- board rendering ---------- */
+  var board = document.getElementById('board'), bctx = board.getContext('2d');
+  var CELL = innerWidth < 760 ? 15 : 19;
+  var cam = { x: 262 - Math.floor(innerWidth / CELL / 2), y: 396 - Math.floor(innerHeight / CELL / 2) };
+  var dpr = Math.min(devicePixelRatio || 1, 2);
+  function resize() {
+    board.width = innerWidth * dpr; board.height = innerHeight * dpr;
+    board.style.width = innerWidth + 'px'; board.style.height = innerHeight + 'px';
+    bctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    render();
+  }
+  function clampCam() {
+    cam.x = Math.max(0, Math.min(W - Math.ceil(innerWidth / CELL), cam.x));
+    cam.y = Math.max(0, Math.min(H - Math.ceil(innerHeight / CELL), cam.y));
+  }
+  function render() {
+    clampCam();
+    var cols = Math.ceil(innerWidth / CELL) + 1, rows = Math.ceil(innerHeight / CELL) + 1;
+    bctx.fillStyle = '#0b0e0a'; bctx.fillRect(0, 0, innerWidth, innerHeight);
+    for (var gy = 0; gy < rows; gy++) for (var gx = 0; gx < cols; gx++) {
+      var x = cam.x + gx, y = cam.y + gy;
+      if (x >= W || y >= H) continue;
+      var sx = gx * CELL, sy = gy * CELL, st = stateAt(x, y);
+      if (st.kind === 'fog') {
+        // sealed cell = raised minesweeper tile: every one of the million looks clickable
+        bctx.fillStyle = ((x + y) % 2) ? '#171c12' : '#191e14';
+        bctx.fillRect(sx, sy, CELL - 1, CELL - 1);
+        bctx.fillStyle = '#262e1b';
+        bctx.fillRect(sx, sy, CELL - 1, 1); bctx.fillRect(sx, sy, 1, CELL - 1);
+        bctx.fillStyle = '#090c06';
+        bctx.fillRect(sx, sy + CELL - 2, CELL - 1, 1); bctx.fillRect(sx + CELL - 2, sy, 1, CELL - 1);
+        continue;
+      }
+      if (st.kind === 'found') {
+        bctx.fillStyle = '#332a0e'; bctx.fillRect(sx, sy, CELL - 1, CELL - 1);
+        bctx.strokeStyle = '#ffd23f'; bctx.lineWidth = 1.5; bctx.strokeRect(sx + 1, sy + 1, CELL - 3, CELL - 3);
+        drawSprite(bctx, SPR.punk, sx, sy, CELL);
+        continue;
+      }
+      var b = band(x, y);
+      bctx.fillStyle = BAND_BG[b]; bctx.fillRect(sx, sy, CELL - 1, CELL - 1);
+      if (b === 'hot') { bctx.strokeStyle = BAND_EDGE.hot; bctx.lineWidth = 1; bctx.strokeRect(sx + .5, sy + .5, CELL - 2, CELL - 2); }
+      if (st.kind === 'common') drawSprite(bctx, SPR.common, sx, sy, CELL, b === 'hot' ? '#ffb0a8' : '#79816f');
+      else if (st.kind === 'rooster') drawSprite(bctx, SPR.rooster, sx, sy, CELL, TIER_COLORS[st.tier]);
+    }
+    renderMini();
+  }
+
+  /* ---------- minimap ---------- */
+  var mini = document.getElementById('mini'), mctx = mini.getContext('2d');
+  function renderMini() {
+    mctx.fillStyle = '#0b0e0a'; mctx.fillRect(0, 0, 150, 150);
+    for (var my = 0; my < 75; my++) for (var mx = 0; mx < 75; mx++) {
+      var d = density(mx * 13.4 + 6, my * 13.4 + 6);
+      if (d > .2) { mctx.fillStyle = 'rgba(122,140,100,' + Math.min(.85, d) + ')'; mctx.fillRect(mx * 2, my * 2, 2, 2); }
+    }
+    UNFOUND.forEach(function (t) { mctx.fillStyle = '#e03a40'; mctx.fillRect(t.x * .15 - 1, t.y * .15 - 1, 3, 3); });
+    FOUND.forEach(function (t) { mctx.fillStyle = '#ffd23f'; mctx.fillRect(t.x * .15 - 1, t.y * .15 - 1, 3, 3); });
+    mctx.strokeStyle = '#e6e8e2'; mctx.lineWidth = 1;
+    mctx.strokeRect(cam.x * .15, cam.y * .15, innerWidth / CELL * .15, innerHeight / CELL * .15);
+  }
+  mini.addEventListener('click', function (e) {
+    var r = mini.getBoundingClientRect();
+    cam.x = Math.floor((e.clientX - r.left) / .15 / 2 * 2) - Math.floor(innerWidth / CELL / 2);
+    cam.y = Math.floor((e.clientY - r.top) / .15 / 2 * 2) - Math.floor(innerHeight / CELL / 2);
+    render();
+  });
+
+  /* ---------- pan + click + hover ---------- */
+  var drag = null, tip = document.getElementById('tip');
+  board.addEventListener('pointerdown', function (e) {
+    drag = { sx: e.clientX, sy: e.clientY, cx: cam.x, cy: cam.y, moved: false };
+    board.classList.add('dragging'); board.setPointerCapture(e.pointerId);
+  });
+  board.addEventListener('pointermove', function (e) {
+    if (drag) {
+      var dx = e.clientX - drag.sx, dy = e.clientY - drag.sy;
+      if (Math.abs(dx) + Math.abs(dy) > 6) drag.moved = true;
+      if (drag.moved) { cam.x = drag.cx - Math.round(dx / CELL); cam.y = drag.cy - Math.round(dy / CELL); render(); }
+    } else {
+      var x = cam.x + Math.floor(e.clientX / CELL), y = cam.y + Math.floor(e.clientY / CELL);
+      if (x < W && y < H) {
+        tip.style.display = 'block';
+        tip.style.left = (e.clientX + 14) + 'px'; tip.style.top = (e.clientY + 14) + 'px';
+        var st = stateAt(x, y);
+        tip.textContent = '(' + x + ', ' + y + ') ' + (st.kind === 'fog' ? '· SEALED — RIP FOR $2' : st.kind === 'found' ? '· ' + st.name + ' FOUND HERE' : '· ' + band(x, y).toUpperCase());
+      }
+    }
+  });
+  board.addEventListener('pointerleave', function () { tip.style.display = 'none'; });
+  board.addEventListener('pointerup', function (e) {
+    board.classList.remove('dragging');
+    if (drag && !drag.moved) {
+      var x = cam.x + Math.floor(e.clientX / CELL), y = cam.y + Math.floor(e.clientY / CELL);
+      if (x < W && y < H && stateAt(x, y).kind === 'fog') rip(x, y);
+    }
+    drag = null;
+  });
+
+  /* ---------- rip + reveal ---------- */
+  var modal = document.getElementById('modal'), card = document.getElementById('card');
+  var lastRip = null;
+  function rip(x, y) {
+    var roll = Math.random(), out;
+    if (roll < .93) out = { kind:'common' };
+    else { var t = Math.random();
+      out = { kind:'rooster', tier: t < .76 ? 'uncommon' : t < .94 ? 'rare' : t < .988 ? 'epic' : t < .999 ? 'legendary' : 'mythic' }; }
+    userRips[x + ',' + y] = out; lastRip = { x:x, y:y };
+    bumpRipped(1); render(); showCard(x, y, out, true);
+    addFeed({ you: true, x:x, y:y, out: out });
+  }
+  function showCard(x, y, out) {
+    var spr = document.getElementById('card-spr'), sctx = spr.getContext('2d');
+    sctx.fillStyle = '#111610'; sctx.fillRect(0, 0, 168, 168);
+    var name, tagClass, tagText;
+    if (out.kind === 'common') { drawSprite(sctx, SPR.common, 0, 0, 168, '#aab2a0'); name = 'COCK'; tagClass = 'common'; tagText = 'COMMON · 1 OF 950,000'; }
+    else { drawSprite(sctx, SPR.rooster, 0, 0, 168, TIER_COLORS[out.tier]); name = 'COCK'; tagClass = out.tier; tagText = out.tier.toUpperCase() + ' ROOSTER'; }
+    card.classList.toggle('mythic-glow', out.tier === 'mythic');
+    document.getElementById('card-name').textContent = name + ' #' + (x * 1000 + y).toString().padStart(6, '0');
+    document.getElementById('card-coords').textContent = '(' + x + ', ' + y + ') · ZONE: THE SHAFTLANDS';
+    var tag = document.getElementById('card-tag'); tag.className = 'tag ' + tagClass; tag.textContent = tagText;
+    var b = band(x, y), bl = { hot:'h', warm:'w', cold:'c', frozen:'d' }[b];
+    document.getElementById('card-heat').innerHTML = 'NEAREST GRAIL: <b class="' + bl + '">' + b.toUpperCase() + '</b>' +
+      (b === 'hot' ? ' · &le;10 CELLS' : b === 'warm' ? ' · 11–30 CELLS' : b === 'cold' ? ' · 31–75 CELLS' : '');
+    modal.classList.add('open');
+  }
+  document.getElementById('card-close').addEventListener('click', function () { modal.classList.remove('open'); });
+  document.getElementById('card-again').addEventListener('click', function () {
+    modal.classList.remove('open');
+    if (!lastRip) return;
+    var tries = 0, x, y;
+    do { x = lastRip.x + Math.floor(Math.random() * 5) - 2; y = lastRip.y + Math.floor(Math.random() * 5) - 2; tries++; }
+    while (tries < 40 && (x < 0 || y < 0 || x >= W || y >= H || stateAt(x, y).kind !== 'fog'));
+    if (stateAt(x, y).kind === 'fog') rip(x, y);
+  });
+  modal.addEventListener('click', function (e) { if (e.target === modal) modal.classList.remove('open'); });
+
+  /* ---------- HUD counter ---------- */
+  var ripped = 412882;
+  function bumpRipped(n) {
+    ripped += n;
+    document.getElementById('hud-ripped').textContent = ripped.toLocaleString('en-US');
+  }
+
+  /* ---------- rip panel ---------- */
+  var qty = 10, PRICE = 2;
+  var qtyEl = document.getElementById('qty');
+  function setQty(n) {
+    qty = Math.max(1, Math.min(100, n)); qtyEl.textContent = qty;
+    document.getElementById('total').textContent = '$' + (qty * PRICE);
+    document.getElementById('total-sol').textContent = (qty * PRICE * .0066).toFixed(2) + ' ◎';
+    document.querySelectorAll('.preset').forEach(function (p) { p.classList.toggle('on', +p.textContent === qty); });
+  }
+  document.getElementById('q-minus').addEventListener('click', function () { setQty(qty - 1); });
+  document.getElementById('q-plus').addEventListener('click', function () { setQty(qty + 1); });
+  document.querySelectorAll('.preset').forEach(function (p) {
+    p.addEventListener('click', function () { setQty(+p.textContent); });
+  });
+  setQty(10);
+
+  /* ---------- live feed ---------- */
+  var feed = document.getElementById('feed');
+  var WALLETS = ['7fLd…5ynq','D8zJ…ZvCF','3uS8…qFU3','H6zp…DfRR','2dTX…jibX','9aQm…xR2w','GmKv…8Ppl'];
+  function feSprite(cv, out) {
+    var ctx = cv.getContext('2d');
+    ctx.fillStyle = '#111610'; ctx.fillRect(0, 0, 28, 28);
+    if (out.kind === 'common') drawSprite(ctx, SPR.common, 0, 0, 28, '#79816f');
+    else if (out.kind === 'rooster') drawSprite(ctx, SPR.rooster, 0, 0, 28, TIER_COLORS[out.tier]);
+    else drawSprite(ctx, SPR.punk, 0, 0, 28);
+  }
+  function addFeed(ev) {
+    var d = document.createElement('div');
+    d.className = 'fe' + (ev.find ? ' find' : ev.burial ? ' burial' : '') + (RM ? '' : ' enter');
+    var cv = document.createElement('canvas'); cv.width = 28; cv.height = 28; cv.className = 'spr';
+    var who = document.createElement('div'); who.className = 'who';
+    var n = document.createElement('div'); n.className = 'n';
+    var m = document.createElement('div'); m.className = 'm';
+    if (ev.burial) {
+      n.textContent = 'A ' + ev.name + ' WAS JUST BURIED'; m.textContent = 'somewhere in the grid · vault deposit';
+      feSprite(cv, { kind:'punk' });
+    } else if (ev.find) {
+      n.textContent = ev.name + ' FOUND (' + ev.x + ', ' + ev.y + ')'; m.textContent = ev.wallet + ' · ' + ev.ago;
+      feSprite(cv, { kind:'punk' });
+    } else {
+      n.textContent = (ev.you ? 'YOU' : ev.wallet) + ' · (' + ev.x + ', ' + ev.y + ')';
+      m.textContent = (ev.ago || 'just now') + ' · $' + PRICE + ' rip';
+      feSprite(cv, ev.out);
+    }
+    var tag = document.createElement('span');
+    if (ev.burial) { tag.className = 'tag mythic'; tag.textContent = 'BURIAL'; }
+    else if (ev.find) { tag.className = 'tag mythic'; tag.textContent = 'GRAIL'; }
+    else if (ev.out.kind === 'common') { tag.className = 'tag common'; tag.textContent = 'COCK'; }
+    else { tag.className = 'tag ' + ev.out.tier; tag.textContent = ev.out.tier.toUpperCase(); }
+    d.appendChild(cv); who.appendChild(n); who.appendChild(m); d.appendChild(who); d.appendChild(tag);
+    feed.insertBefore(d, feed.firstChild);
+    while (feed.children.length > 26) feed.removeChild(feed.lastChild);
+  }
+  // seed feed
+  addFeed({ find: true, name:'PUNK #7804', x:211, y:388, wallet:'7fLd…5ynq', ago:'22m ago' });
+  addFeed({ wallet:'D8zJ…ZvCF', x:214, y:391, out:{kind:'rooster',tier:'legendary'}, ago:'25m ago' });
+  addFeed({ burial: true, name:'BORED APE' });
+  for (var i = 0; i < 8; i++) {
+    var s = SWARMS[i % SWARMS.length];
+    addFeed({ wallet: WALLETS[i % WALLETS.length], x: s.x + i, y: s.y - i,
+      out: Math.random() < .8 ? {kind:'common'} : {kind:'rooster',tier: Math.random()<.7?'uncommon':'rare'}, ago: (28 + i * 3) + 'm ago' });
+  }
+  // ambient activity
+  setInterval(function () {
+    var s = SWARMS[Math.floor(Math.random() * SWARMS.length)];
+    var out = Math.random() < .9 ? {kind:'common'} : {kind:'rooster', tier: Math.random() < .75 ? 'uncommon' : 'rare'};
+    addFeed({ wallet: WALLETS[Math.floor(Math.random() * WALLETS.length)],
+      x: s.x + Math.floor(Math.random() * 20 - 10), y: s.y + Math.floor(Math.random() * 20 - 10), out: out });
+    bumpRipped(Math.floor(Math.random() * 8) + 1);
+  }, RM ? 12000 : 5000);
+
+  /* ---------- gate ---------- */
+  document.getElementById('start').addEventListener('click', function () {
+    document.getElementById('gate').classList.add('hidden');
+  });
+
+  addEventListener('resize', resize);
+  resize();
+})();
+</script>
