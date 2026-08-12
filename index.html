@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<title>Cock Sweepa — UI Mockup</title>
+<title>Cock Sweepa</title>
 <style>
   :root {
     --night:   #0b0e0a;
@@ -59,6 +59,7 @@
   .btn.violet { background: var(--violet); }
   .btn.ghost { background: rgba(10,13,8,.92); border-color: var(--border-2); color: var(--ink-mid);
     box-shadow: 0 3px 0 rgba(0,0,0,.45); }
+  .btn.ghost.on { color: var(--gold); border-color: var(--gold); }
 
   /* ---------- rip rail ---------- */
   .rail { position: fixed; top: 64px; right: 12px; bottom: 12px; width: 300px; z-index: 55;
@@ -121,16 +122,27 @@
   #tip { position: fixed; z-index: 70; pointer-events: none; background: #000; border: 1px solid var(--border-2);
     color: var(--ink-mid); font-size: 10px; padding: 4px 8px; display: none; letter-spacing: .08em; white-space: nowrap; }
 
-  /* ---------- gate ---------- */
+  /* ---------- gate: overlay ON TOP of the live board, Tontine-style lockup ---------- */
   .gate { position: fixed; inset: 0; z-index: 100; background:
-      radial-gradient(ellipse at 50% 30%, #1a2414 0%, #0e1309 55%, #070905 100%);
-    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; }
+      radial-gradient(ellipse at 50% 42%, rgba(4,6,3,.30) 0%, rgba(4,6,3,.62) 60%, rgba(2,3,1,.86) 100%);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; }
   .gate.hidden { display: none; }
-  .gate .sub { font-size: 12px; letter-spacing: .34em; color: var(--ink-mid); text-transform: uppercase; }
-  .gate .sub b { color: var(--gold); }
-  .gate .fine { font-size: 10px; letter-spacing: .2em; color: var(--ink-soft); text-transform: uppercase; }
-  .gate .fine b { color: var(--ink-mid); }
-  .gate .start { margin-top: 10px; font-size: 15px; padding: 14px 34px; }
+  .gate-logo { image-rendering: pixelated; display: block; margin-bottom: 2px;
+    filter: drop-shadow(0 6px 0 rgba(0,0,0,.55)); }
+  .gate-panel { background: rgba(7,9,5,.96); border: 2px solid var(--border-2);
+    outline: 2px solid rgba(7,9,5,.96); outline-offset: 3px;
+    box-shadow: 0 6px 0 rgba(0,0,0,.55); padding: 15px 8px 0; text-align: center; min-width: 320px; }
+  .gate-panel .g-eyebrow { font-size: 12px; letter-spacing: .28em; color: var(--ink); text-transform: uppercase; line-height: 1.7; }
+  .gate-panel .g-by { display: inline-block; margin: 8px 0 13px; font-size: 9px; letter-spacing: .2em;
+    color: var(--ink-mid); border: 1px solid var(--border-2); padding: 2px 9px; text-transform: uppercase; }
+  .gate-rules { border-top: 2px solid var(--border-2); }
+  .gate-rules div { padding: 10px 18px; border-bottom: 1px solid var(--border); font-size: 13px;
+    color: var(--ink); letter-spacing: .05em; }
+  .gate-rules div:last-child { border-bottom: none; }
+  .gate-rules b { color: var(--gold); font-weight: 700; }
+  .gate .terms { margin-top: 13px; font-size: 10px; letter-spacing: .18em; color: var(--ink-soft);
+    text-decoration: underline; cursor: pointer; text-transform: uppercase; }
+  .gate .start { margin-top: 20px; font-size: 15px; padding: 14px 34px; }
   @media (prefers-reduced-motion: no-preference) {
     .gate .start { animation: pulse 1.6s ease-in-out infinite; }
     @keyframes pulse { 50% { box-shadow: 0 3px 0 rgba(0,0,0,.5), 0 0 22px rgba(200,35,44,.6); } }
@@ -171,7 +183,8 @@
     <div class="stat"><span class="lbl">RIPPED</span> <b id="hud-ripped">412,882</b><span style="color:var(--ink-soft)">/1M</span></div>
     <div class="stat"><span class="lbl">PRICE</span> <b style="color:var(--mint)">$2</b><span style="color:var(--ink-soft);font-size:10px" id="tier-note">· $3 AT 500K</span></div>
     <div class="stat gold"><span class="lbl">GRAILS</span> <b>61<span style="color:var(--ink-soft)">/214</span></b></div>
-    <div class="stat hot"><span class="lbl">HOT ZONES</span> <b id="hud-hot">3</b></div>
+    <div class="stat gold"><span class="lbl">MEGAPOT</span> <b>$1.24M</b></div>
+    <div class="stat hot"><span class="lbl">LAST FIND</span> <b>PUNK (211, 388)</b></div>
     <div class="hud-spacer"></div>
     <button class="btn ghost" id="snd">&#9836;</button>
     <button class="btn ghost">?</button>
@@ -193,7 +206,7 @@
       </div>
       <div class="total"><span class="lbl">TOTAL</span><span><b id="total">$20</b><span class="sol" id="total-sol">0.13 ◎</span></span></div>
       <button class="btn rose rip-cta">CONNECT WALLET TO RIP</button>
-      <div class="rails-note">UP TO 100 RIPS · ONE APPROVAL<br>PAYMENTS BY <b>BLINK</b> · PRIZES BY <b>KIMJI</b></div>
+      <div class="rails-note">UP TO 100 RIPS · ONE WALLET TXN<br>CRYPTO ONLY · PRIZES BY <b>KIMJI</b></div>
     </div>
     <div class="panel feed">
       <h3>LIVE RIPS</h3>
@@ -201,14 +214,7 @@
     </div>
   </div>
 
-  <!-- minimap + legend -->
-  <div class="legend">
-    <div><span class="sw" style="background:var(--heat)"></span>HOT &le;10</div>
-    <div><span class="sw" style="background:var(--warm)"></span>WARM &le;30</div>
-    <div><span class="sw" style="background:var(--cold)"></span>COLD &le;75</div>
-    <div><span class="sw" style="background:var(--dead)"></span>FROZEN</div>
-    <div><span class="sw" style="background:var(--gold)"></span>GRAIL FOUND</div>
-  </div>
+  <!-- minimap -->
   <div class="minimap">
     <canvas id="mini" width="150" height="150"></canvas>
     <div class="cap">1000 &times; 1000 · DRAG TO PAN</div>
@@ -233,10 +239,18 @@
 
   <!-- gate -->
   <div class="gate" id="gate">
-    <canvas id="logo"></canvas>
-    <div class="sub">1,000,000 COCKS &middot; ONE GRID &middot; <b>214 BURIED GRAILS</b></div>
+    <canvas id="logo" class="gate-logo"></canvas>
+    <div class="gate-panel">
+      <div class="g-eyebrow">An online game<br>of cock</div><br>
+      <span class="g-by">1,000,000 sealed cells</span>
+      <div class="gate-rules">
+        <div><b>Pay $1</b> to rip a cock</div>
+        <div>Any cell can hide a <b>grail</b></div>
+        <div>Last rip mints <b>the Mega Image</b></div>
+      </div>
+    </div>
     <button class="btn rose start" id="start">START RIPPING COCK</button>
-    <div class="fine">A TREASURE-HUNT MINT &middot; EVERY RIP IS A CLUE &middot; POWERED BY <b>BLINK</b> &times; <b>KIMJI</b></div>
+    <div class="terms">Terms</div>
   </div>
 </div>
 
@@ -251,25 +265,44 @@
     O:{w:3,r:[2,5,5,5,2]}, P:{w:3,r:[6,5,6,4,4]}, S:{w:3,r:[3,4,2,1,6]},
     W:{w:5,r:[17,17,21,21,10]}, ' ':{w:2,r:[0,0,0,0,0]}
   };
-  function drawPixelText(cv, text, scale, color, shadow) {
-    var chars = text.split(''), w = 0;
-    chars.forEach(function (c) { w += (GLYPH[c] || GLYPH[' ']).w + 1; });
-    cv.width = w * scale; cv.height = 7 * scale;
-    cv.style.width = cv.width + 'px'; cv.style.height = cv.height + 'px';
-    var ctx = cv.getContext('2d'), x = 0;
-    chars.forEach(function (c) {
-      var g = GLYPH[c] || GLYPH[' '];
-      for (var r = 0; r < 5; r++) for (var b = 0; b < g.w; b++) {
-        if (g.r[r] & (1 << (g.w - 1 - b))) {
-          ctx.fillStyle = shadow; ctx.fillRect((x + b) * scale + scale, r * scale + scale, scale, scale);
-          ctx.fillStyle = color; ctx.fillRect((x + b) * scale, r * scale, scale, scale);
+  // Tontine-style logo lockup: extruded stone letters, moss creep, flanking roosters
+  function renderLogo() {
+    var logo = document.getElementById('logo');
+    var s = Math.max(7, Math.min(13, Math.floor(innerWidth / 42)));
+    var lines = ['COCK', 'SWEEPA'];
+    function lineW(t) { var w = 0; for (var i = 0; i < t.length; i++) w += GLYPH[t[i]].w + 1; return w - 1; }
+    var w1 = lineW(lines[0]), w2 = lineW(lines[1]), wMax = Math.max(w1, w2);
+    var pad = 9, depth = Math.max(2, Math.floor(s * .45));
+    var cw = (wMax + pad * 2) * s, ch = 13 * s + depth;
+    logo.width = cw; logo.height = ch;
+    logo.style.width = cw + 'px'; logo.style.height = ch + 'px';
+    var ctx = logo.getContext('2d');
+    var MOSS = ['#4f7a3a', '#79a052', '#2f5426'];
+    function word(t, cx, cy) {
+      var x = cx;
+      for (var i = 0; i < t.length; i++) {
+        var g = GLYPH[t[i]];
+        for (var r = 0; r < 5; r++) for (var b = 0; b < g.w; b++) {
+          if (g.r[r] & (1 << (g.w - 1 - b))) {
+            var px = (x + b) * s, py = (cy + r) * s;
+            ctx.fillStyle = '#060804';
+            ctx.fillRect(px + depth, py + depth, s, s);
+            var f = r === 0 ? '#f4f6ee' : r === 4 ? '#b9c0ab' : '#dfe3d6';
+            if (Math.random() < .16) f = MOSS[(Math.random() * MOSS.length) | 0];
+            ctx.fillStyle = f; ctx.fillRect(px, py, s, s);
+          }
         }
+        x += g.w + 1;
       }
-      x += g.w + 1;
-    });
+    }
+    word(lines[0], pad + Math.floor((wMax - w1) / 2), 1);
+    word(lines[1], pad + Math.floor((wMax - w2) / 2), 8);
+    var rs = s * 7;
+    drawSprite(ctx, SPR.rooster, s * .4, s * 2.5, rs, '#c8232c');
+    ctx.save(); ctx.translate(cw - s * .4, 0); ctx.scale(-1, 1);
+    drawSprite(ctx, SPR.rooster, 0, s * 2.5, rs, '#c8232c');
+    ctx.restore();
   }
-  var logo = document.getElementById('logo');
-  drawPixelText(logo, 'COCK SWEEPA', Math.min(13, Math.floor(innerWidth / 46)), '#d8dcd0', '#232b1e');
 
   /* ---------- sprites ---------- */
   var SPR = {
@@ -297,7 +330,6 @@
                  {x:790,y:130,r:12,d:.5},  {x:95,y:705,r:11,d:.45}, {x:430,y:300,r:22,d:.3},
                  {x:600,y:700,r:16,d:.25} ];
   var FOUND = [ {x:211,y:388,name:'PUNK'} ];
-  var UNFOUND = [ {x:236,y:402},{x:523,y:509},{x:794,y:126},{x:91,y:709},{x:648,y:222},{x:333,y:840} ];
   function density(x, y) {
     var d = .12;
     for (var i = 0; i < SWARMS.length; i++) {
@@ -306,21 +338,6 @@
     }
     return Math.min(d, .97);
   }
-  function chebNearest(x, y) {
-    var best = 1e9;
-    for (var i = 0; i < UNFOUND.length; i++) {
-      var d = Math.max(Math.abs(x - UNFOUND[i].x), Math.abs(y - UNFOUND[i].y));
-      if (d < best) best = d;
-    }
-    return best;
-  }
-  function band(x, y) {
-    var d = chebNearest(x, y);
-    return d <= 10 ? 'hot' : d <= 30 ? 'warm' : d <= 75 ? 'cold' : 'frozen';
-  }
-  var BAND_BG = { hot:'#3d1210', warm:'#2c1a10', cold:'#1c2415', frozen:'#14180f' };
-  var BAND_EDGE = { hot:'#e03a40', warm:'#7a3a2a', cold:'#33412a', frozen:'#39412f' };
-
   var userRips = {}; // "x,y" -> outcome
   function outcomeAt(x, y) {
     var r = hash(x, y, 7);
@@ -376,10 +393,8 @@
         drawSprite(bctx, SPR.punk, sx, sy, CELL);
         continue;
       }
-      var b = band(x, y);
-      bctx.fillStyle = BAND_BG[b]; bctx.fillRect(sx, sy, CELL - 1, CELL - 1);
-      if (b === 'hot') { bctx.strokeStyle = BAND_EDGE.hot; bctx.lineWidth = 1; bctx.strokeRect(sx + .5, sy + .5, CELL - 2, CELL - 2); }
-      if (st.kind === 'common') drawSprite(bctx, SPR.common, sx, sy, CELL, b === 'hot' ? '#ffb0a8' : '#79816f');
+      bctx.fillStyle = '#10140c'; bctx.fillRect(sx, sy, CELL - 1, CELL - 1);
+      if (st.kind === 'common') drawSprite(bctx, SPR.common, sx, sy, CELL, '#79816f');
       else if (st.kind === 'rooster') drawSprite(bctx, SPR.rooster, sx, sy, CELL, TIER_COLORS[st.tier]);
     }
     renderMini();
@@ -393,7 +408,6 @@
       var d = density(mx * 13.4 + 6, my * 13.4 + 6);
       if (d > .2) { mctx.fillStyle = 'rgba(122,140,100,' + Math.min(.85, d) + ')'; mctx.fillRect(mx * 2, my * 2, 2, 2); }
     }
-    UNFOUND.forEach(function (t) { mctx.fillStyle = '#e03a40'; mctx.fillRect(t.x * .15 - 1, t.y * .15 - 1, 3, 3); });
     FOUND.forEach(function (t) { mctx.fillStyle = '#ffd23f'; mctx.fillRect(t.x * .15 - 1, t.y * .15 - 1, 3, 3); });
     mctx.strokeStyle = '#e6e8e2'; mctx.lineWidth = 1;
     mctx.strokeRect(cam.x * .15, cam.y * .15, innerWidth / CELL * .15, innerHeight / CELL * .15);
@@ -422,7 +436,7 @@
         tip.style.display = 'block';
         tip.style.left = (e.clientX + 14) + 'px'; tip.style.top = (e.clientY + 14) + 'px';
         var st = stateAt(x, y);
-        tip.textContent = '(' + x + ', ' + y + ') ' + (st.kind === 'fog' ? '· SEALED — RIP FOR $2' : st.kind === 'found' ? '· ' + st.name + ' FOUND HERE' : '· ' + band(x, y).toUpperCase());
+        tip.textContent = '(' + x + ', ' + y + ') ' + (st.kind === 'fog' ? '· SEALED — RIP FOR $2' : st.kind === 'found' ? '· ' + st.name + ' FOUND HERE' : '· RIPPED');
       }
     }
   });
@@ -438,12 +452,14 @@
 
   /* ---------- rip + reveal ---------- */
   var modal = document.getElementById('modal'), card = document.getElementById('card');
-  var lastRip = null;
+  var lastRip = null, myRipCount = 0;
   function rip(x, y) {
     var roll = Math.random(), out;
     if (roll < .93) out = { kind:'common' };
     else { var t = Math.random();
       out = { kind:'rooster', tier: t < .76 ? 'uncommon' : t < .94 ? 'rare' : t < .988 ? 'epic' : t < .999 ? 'legendary' : 'mythic' }; }
+    myRipCount++;
+    if (myRipCount % 10 === 0) out.ticket = true;
     userRips[x + ',' + y] = out; lastRip = { x:x, y:y };
     bumpRipped(1); render(); showCard(x, y, out, true);
     addFeed({ you: true, x:x, y:y, out: out });
@@ -458,9 +474,11 @@
     document.getElementById('card-name').textContent = name + ' #' + (x * 1000 + y).toString().padStart(6, '0');
     document.getElementById('card-coords').textContent = '(' + x + ', ' + y + ') · ZONE: THE SHAFTLANDS';
     var tag = document.getElementById('card-tag'); tag.className = 'tag ' + tagClass; tag.textContent = tagText;
-    var b = band(x, y), bl = { hot:'h', warm:'w', cold:'c', frozen:'d' }[b];
-    document.getElementById('card-heat').innerHTML = 'NEAREST GRAIL: <b class="' + bl + '">' + b.toUpperCase() + '</b>' +
-      (b === 'hot' ? ' · &le;10 CELLS' : b === 'warm' ? ' · 11–30 CELLS' : b === 'cold' ? ' · 31–75 CELLS' : '');
+    if (out.ticket) {
+      document.getElementById('card-heat').innerHTML = '<b style="color:var(--gold)">+1 MEGAPOT TICKET</b> · TONIGHT\'S JACKPOT <b style="color:var(--gold)">$1.24M</b>';
+    } else {
+      document.getElementById('card-heat').innerHTML = 'GRAIL ODDS: <b class="c">1 : 3,838</b> · MEGAPOT TICKET EVERY 10TH RIP';
+    }
     modal.classList.add('open');
   }
   document.getElementById('card-close').addEventListener('click', function () { modal.classList.remove('open'); });
@@ -552,12 +570,37 @@
     bumpRipped(Math.floor(Math.random() * 8) + 1);
   }, RM ? 12000 : 5000);
 
+  /* ---------- site sound: BAROQ harpsichord loop (Splice, licensed), gapless via Web Audio ---------- */
+  var actx = null, gainNode = null, audioBuf = null, soundOn = false;
+  var sndBtn = document.getElementById('snd');
+  function playLoop() {
+    if (!audioBuf || !soundOn) return;
+    var s = actx.createBufferSource();
+    s.buffer = audioBuf; s.loop = true;
+    s.loopStart = 0.03; s.loopEnd = audioBuf.duration - 0.06;
+    s.connect(gainNode); s.start();
+  }
+  function startSound() {
+    if (soundOn) return;
+    soundOn = true; sndBtn.classList.add('on');
+    if (actx) { actx.resume(); return; }
+    actx = new (window.AudioContext || window.webkitAudioContext)();
+    gainNode = actx.createGain(); gainNode.gain.value = .35; gainNode.connect(actx.destination);
+    fetch('/harpsi.m4a').then(function (r) { return r.arrayBuffer(); })
+      .then(function (ab) { return actx.decodeAudioData(ab); })
+      .then(function (buf) { audioBuf = buf; playLoop(); });
+  }
+  function stopSound() { soundOn = false; sndBtn.classList.remove('on'); if (actx) actx.suspend(); }
+  sndBtn.addEventListener('click', function () { soundOn ? stopSound() : startSound(); });
+
   /* ---------- gate ---------- */
   document.getElementById('start').addEventListener('click', function () {
     document.getElementById('gate').classList.add('hidden');
+    startSound();
   });
 
   addEventListener('resize', resize);
   resize();
+  renderLogo();
 })();
 </script>
