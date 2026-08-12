@@ -188,7 +188,7 @@
     <div class="hud-spacer"></div>
     <button class="btn ghost" id="snd">&#9836;</button>
     <button class="btn ghost">?</button>
-    <button class="btn rose">CONNECT WALLET</button>
+    <button class="btn rose" id="hud-connect">CONNECT WALLET</button>
   </div>
 
   <!-- rip rail -->
@@ -205,7 +205,7 @@
         <div class="preset">25</div><div class="preset">50</div><div class="preset">100</div>
       </div>
       <div class="total"><span class="lbl">TOTAL</span><span><b id="total">$20</b><span class="sol" id="total-sol">0.13 ◎</span></span></div>
-      <button class="btn rose rip-cta">CONNECT WALLET TO RIP</button>
+      <button class="btn rose rip-cta" id="rip-cta">CONNECT WALLET TO RIP</button>
       <div class="rails-note">UP TO 100 RIPS · ONE WALLET TXN<br>CRYPTO ONLY · PRIZES BY <b>KIMJI</b></div>
     </div>
     <div class="panel feed">
@@ -530,6 +530,42 @@
   addFeed({ burial: true, name:'PUNK' });
   addFeed({ burial: true, name:'BORED APE' });
   addFeed({ burial: true, name:'2,000 KIMJI CREDITS' });
+
+  /* ---------- wallet connect: injected providers (Phantom / Backpack / Solflare) ---------- */
+  var walletPk = null;
+  var hudConnect = document.getElementById('hud-connect');
+  var ripCta = document.getElementById('rip-cta');
+  function walletProvider() {
+    if (window.phantom && window.phantom.solana) return window.phantom.solana;
+    if (window.backpack) return window.backpack;
+    if (window.solflare) return window.solflare;
+    if (window.solana) return window.solana;
+    return null;
+  }
+  function walletUI() {
+    if (walletPk) {
+      var s = walletPk.slice(0, 4) + '…' + walletPk.slice(-4);
+      hudConnect.textContent = s;
+      ripCta.textContent = 'WALLET READY · MINT OPENS SOON';
+    } else {
+      hudConnect.textContent = 'CONNECT WALLET';
+      ripCta.textContent = 'CONNECT WALLET TO RIP';
+    }
+  }
+  function connectWallet() {
+    var p = walletProvider();
+    if (!p) { window.open('https://phantom.app/', '_blank'); return; }
+    if (walletPk) {
+      Promise.resolve(p.disconnect && p.disconnect()).catch(function () {});
+      walletPk = null; walletUI(); return;
+    }
+    Promise.resolve(p.connect()).then(function (res) {
+      var pk = (res && res.publicKey) || p.publicKey;
+      if (pk) { walletPk = pk.toString(); walletUI(); }
+    }).catch(function () {});
+  }
+  hudConnect.addEventListener('click', connectWallet);
+  ripCta.addEventListener('click', connectWallet);
 
   /* ---------- site sound: BAROQ harpsichord loop (Splice, licensed), gapless via Web Audio ---------- */
   var actx = null, gainNode = null, audioBuf = null, soundOn = false;
