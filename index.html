@@ -459,13 +459,10 @@
     modal.classList.add('open');
   }
   document.getElementById('card-close').addEventListener('click', function () { modal.classList.remove('open'); });
+  // RIP AGAIN returns you to the board to pick your own next cell —
+  // choosing the square is the game; never auto-rip for the player.
   document.getElementById('card-again').addEventListener('click', function () {
     modal.classList.remove('open');
-    if (!lastRip) return;
-    var tries = 0, x, y;
-    do { x = lastRip.x + Math.floor(Math.random() * 5) - 2; y = lastRip.y + Math.floor(Math.random() * 5) - 2; tries++; }
-    while (tries < 40 && (x < 0 || y < 0 || x >= W || y >= H || stateAt(x, y).kind !== 'fog'));
-    if (stateAt(x, y).kind === 'fog') rip(x, y);
   });
   modal.addEventListener('click', function (e) { if (e.target === modal) modal.classList.remove('open'); });
 
