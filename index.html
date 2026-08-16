@@ -304,13 +304,18 @@
 
   /* ---------- board rendering: whole grid fits, no pan ---------- */
   var board = document.getElementById('board'), bctx = board.getContext('2d');
-  var CELL = 9, OX = 0, OY = 0;
+  var CELL = 9, OX = 0, OY = 0, panX = 0, panY = 0, panInit = false;
   var dpr = Math.min(devicePixelRatio || 1, 2);
+  // Cover mode: the grid always fills the viewport edge to edge; pan to reach crop.
   function layout() {
-    var availW = innerWidth - (innerWidth > 760 ? 340 : 20), availH = innerHeight - 70;
-    CELL = Math.max(4, Math.floor(Math.min(availW / W, availH / H)));
-    OX = Math.floor((availW - CELL * W) / 2) + 10;
-    OY = 64 + Math.floor((availH - CELL * H) / 2);
+    CELL = Math.ceil(Math.max(innerWidth / W, innerHeight / H));
+    if (!panInit) { panX = (innerWidth - CELL * W) / 2; panY = (innerHeight - CELL * H) / 2; panInit = true; }
+    clampPan();
+  }
+  function clampPan() {
+    panX = Math.min(0, Math.max(innerWidth - CELL * W, panX));
+    panY = Math.min(0, Math.max(innerHeight - CELL * H, panY));
+    OX = Math.round(panX); OY = Math.round(panY);
   }
   function resize() {
     board.width = innerWidth * dpr; board.height = innerHeight * dpr;
@@ -355,6 +360,11 @@
     return (x >= 0 && y >= 0 && x < W && y < H) ? { x: x, y: y } : null;
   }
   board.addEventListener('pointermove', function (e) {
+    if (drag) {
+      var dx = e.clientX - drag.sx, dy = e.clientY - drag.sy;
+      if (Math.abs(dx) + Math.abs(dy) > 6) drag.moved = true;
+      if (drag.moved) { panX = drag.px + dx; panY = drag.py + dy; clampPan(); render(); tip.style.display = 'none'; return; }
+    }
     var p = cellAt(e);
     if (!p) { tip.style.display = 'none'; return; }
     tip.style.display = 'block';
@@ -366,13 +376,22 @@
        c.tier.toUpperCase() + ' · ' + c.charge.toLocaleString('en-US') + ' $COCK');
   });
   board.addEventListener('pointerleave', function () { tip.style.display = 'none'; });
+  var drag = null;
   board.addEventListener('pointerdown', function (e) {
-    var p = cellAt(e);
-    if (!p) return;
-    var key = p.x + ',' + p.y, c = cells[key];
-    if (mode === 'mint' && !c) doMint(p.x, p.y);
-    else if (mode === 'summon' && c && c.kind === 'tomb') doSummon(p.x, p.y);
-    else if (c && c.kind === 'alive' && c.mine) showCard(p.x, p.y, c, false);
+    drag = { sx: e.clientX, sy: e.clientY, px: panX, py: panY, moved: false };
+    board.setPointerCapture(e.pointerId);
+  });
+  board.addEventListener('pointerup', function (e) {
+    if (drag && !drag.moved) {
+      var p = cellAt(e);
+      if (p) {
+        var key = p.x + ',' + p.y, c = cells[key];
+        if (mode === 'mint' && !c) doMint(p.x, p.y);
+        else if (mode === 'summon' && c && c.kind === 'tomb') doSummon(p.x, p.y);
+        else if (c && c.kind === 'alive' && c.mine) showCard(p.x, p.y, c, false);
+      }
+    }
+    drag = null;
   });
 
   /* ---------- game actions (demo state; contracts land here) ---------- */
@@ -453,7 +472,7 @@
     feed.insertBefore(d, feed.firstChild);
     while (feed.children.length > 30) feed.removeChild(feed.lastChild);
   }
-  addFeed({ n: 'THE BOARD IS SEALED', m: '10,000 cells · 1B $COCK inside · no presale', tier: 'common' });
+  addFeed({ n: 'THE BOARD IS SEALED', m: '20,000 cells · 1B $COCK inside · no presale', tier: 'common' });
 
   /* ---------- reveal card ---------- */
   var modal = document.getElementById('modal'), card = document.getElementById('card');
