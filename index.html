@@ -149,7 +149,7 @@
   <div class="crt"></div>
 
   <div class="hud">
-    <div class="stat"><span class="lbl">MINTED</span> <b id="hud-minted">0</b><span style="color:var(--ink-soft)">/10,000</span></div>
+    <div class="stat"><span class="lbl">MINTED</span> <b id="hud-minted">0</b><span style="color:var(--ink-soft)">/20,000</span></div>
     <div class="stat gold"><span class="lbl">$COCK CLAIMED</span> <b id="hud-claimed">0</b><span style="color:var(--ink-soft)">/1B</span></div>
     <div class="stat hot"><span class="lbl">TOMBSTONES</span> <b id="hud-tombs">0</b></div>
     <div class="stat gold"><span class="lbl">YOLK POOL</span> <b id="hud-yolk">0</b></div>
@@ -166,7 +166,7 @@
       <button class="btn rose wide" id="mint-btn">MINT A COCK · FREE (1 LEFT)</button>
       <div class="row2">
         <button class="btn violet" id="paid-btn">+1 MORE · $5 (3 LEFT)</button>
-        <button class="btn gold" id="summon-btn" disabled>SUMMON · 140K</button>
+        <button class="btn gold" id="summon-btn" disabled>SUMMON · 70K</button>
       </div>
       <div class="mint-note">PICK A SEALED CELL AFTER PRESSING MINT<br>1 FREE PER IDENTITY · <b>ROBINHOOD CHAIN</b> · NO PRESALE</div>
     </div>
@@ -197,7 +197,7 @@
     <canvas id="logo" class="gate-logo"></canvas>
     <div class="gate-panel">
       <div class="g-eyebrow">An online game<br>of cock</div><br>
-      <span class="g-by">10,000 cocks &middot; 1,000,000,000 $COCK</span>
+      <span class="g-by">20,000 cocks &middot; 1,000,000,000 $COCK</span>
       <div class="gate-rules">
         <div><b>Mint free</b> &mdash; every cock is stuffed with <b>$COCK</b></div>
         <div><b>Burn</b> the cock to claim the token</div>
@@ -272,29 +272,29 @@
   }
 
   /* ---------- world: 100x100, all sealed at genesis ---------- */
-  var W = 100, H = 100, TOTAL = 1000000000;
+  var W = 200, H = 100, TOTAL = 1000000000;
   var cells = {}; // "x,y" -> {kind:'alive'|'tomb', tier, charge, mine}
   var minted = 0, tombs = 0, claimed = 0, yolk = 0, balance = 0;
   var freeLeft = 1, paidLeft = 3;
   var mode = null; // 'mint' | 'summon'
 
   function rollTier() {
-    var r = Math.random() * 10000;
-    if (r < 9000) return 'common';
-    if (r < 9700) return 'uncommon';
-    if (r < 9920) return 'rare';
-    if (r < 9980) return 'epic';
-    if (r < 9994) return 'legendary';
+    var r = Math.random() * 20000;
+    if (r < 10000) return 'common';
+    if (r < 17500) return 'uncommon';
+    if (r < 19500) return 'rare';
+    if (r < 19900) return 'epic';
+    if (r < 19980) return 'legendary';
     return 'mythic';
   }
-  var BASE = { common:68300, uncommon:150000, rare:400000, epic:1500000, legendary:3000000, mythic:5000000 };
+  var BASE = { common:34000, uncommon:44000, rare:80000, epic:200000, legendary:500000, mythic:2500000 };
   function posMult(x, y) {
     if (x === 69 && y === 69) return 6.9;
-    if ((x === 0 || x === 99) && (y === 0 || y === 99)) return 3;
-    if (x === 49 && y === 49 || x === 50 && y === 50 || x === 49 && y === 50 || x === 50 && y === 49) return 5;
+    if ((x === 0 || x === 199) && (y === 0 || y === 99)) return 3;
+    if ((x === 99 || x === 100) && (y === 49 || y === 50)) return 5;
     var xs = '' + x, ys = '' + y;
     if (x === y || xs === ys.split('').reverse().join('')) return 1.69;
-    if (x === 0 || x === 99 || y === 0 || y === 99) return 1.5;
+    if (x === 0 || x === 199 || y === 0 || y === 99) return 1.5;
     return 1;
   }
   function chargeFor(tier, x, y) {
@@ -401,14 +401,14 @@
     modal.classList.remove('open');
   }
   function doSummon(x, y) {
-    if (balance < 140000) return;
-    balance -= 140000; claimed -= 100000; yolk += 10000;
+    if (balance < 70000) return;
+    balance -= 70000; claimed -= 50000; yolk += 5000;
     var tier = rollTier();
     var c = { kind: 'alive', tier: tier, charge: chargeFor(tier, x, y), mine: true };
     cells[x + ',' + y] = c;
     tombs--; minted++; mode = null;
     updateHud(); render();
-    addFeed({ n: 'YOU SUMMONED (' + x + ', ' + y + ')', m: '140K melted · 20K burned forever', tier: tier });
+    addFeed({ n: 'YOU SUMMONED (' + x + ', ' + y + ')', m: '70K melted · 10K burned forever', tier: tier });
     showCard(x, y, c, true);
   }
 
@@ -426,11 +426,11 @@
     mintBtn.disabled = freeLeft <= 0;
     paidBtn.textContent = '+1 MORE · $5 (' + paidLeft + ' LEFT)';
     paidBtn.disabled = paidLeft <= 0;
-    summonBtn.disabled = balance < 140000 || tombs <= 0;
+    summonBtn.disabled = balance < 70000 || tombs <= 0;
   }
   mintBtn.addEventListener('click', function () { if (freeLeft > 0) { mode = 'mint'; render(); } });
   paidBtn.addEventListener('click', function () { if (paidLeft > 0 && freeLeft <= 0) { mode = 'mint'; render(); } else if (freeLeft > 0) { mode = 'mint'; render(); } });
-  summonBtn.addEventListener('click', function () { if (balance >= 140000 && tombs > 0) { mode = 'summon'; render(); } });
+  summonBtn.addEventListener('click', function () { if (balance >= 70000 && tombs > 0) { mode = 'summon'; render(); } });
 
   /* ---------- feed ---------- */
   var feed = document.getElementById('feed');
@@ -465,7 +465,7 @@
     if (c.tier === 'common') drawSprite(sctx, SPR.common, 0, 0, 168, '#aab2a0');
     else drawSprite(sctx, SPR.rooster, 0, 0, 168, TIER_COLORS[c.tier]);
     card.classList.toggle('mythic-glow', c.tier === 'mythic');
-    document.getElementById('card-name').textContent = 'COCK #' + (x * 100 + y).toString().padStart(4, '0');
+    document.getElementById('card-name').textContent = 'COCK #' + (x * 100 + y).toString().padStart(5, '0');
     document.getElementById('card-coords').textContent = '(' + x + ', ' + y + ') · THE SHAFTLANDS';
     var tag = document.getElementById('card-tag');
     tag.className = 'tag ' + c.tier; tag.textContent = c.tier.toUpperCase();
