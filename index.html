@@ -92,6 +92,13 @@
   @keyframes cardshake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} }
   .card.burning { animation: cardshake .12s linear 3; border-color: var(--rose-2); }
 
+  .minimap { position: fixed; left: 12px; bottom: 12px; z-index: 55; background: rgba(10,13,8,.94);
+    border: 2px solid var(--border-2); box-shadow: 0 4px 0 rgba(0,0,0,.5); padding: 8px; display: none; }
+  .minimap.on { display: block; }
+  .minimap canvas { width: 200px; height: 100px; display: block; }
+  .minimap .cap { font-size: 8px; letter-spacing: .18em; color: var(--ink-soft); margin-top: 6px; text-align: center; }
+  @media (max-width: 760px) { .minimap { display: none !important; } }
+
   /* tooltip */
   #tip { position: fixed; z-index: 70; pointer-events: none; background: #000; border: 1px solid var(--border-2);
     color: var(--ink-mid); font-size: 10px; padding: 4px 8px; display: none; letter-spacing: .08em; white-space: nowrap; }
@@ -158,7 +165,7 @@
     <div class="stat gold"><span class="lbl">REFLECTED</span> <b id="hud-yolk">0</b></div>
     <div class="hud-spacer"></div>
     <button class="btn ghost" id="snd">&#9836;</button>
-    <button class="btn ghost">?</button>
+    <button class="btn ghost" id="heat-btn">HEAT</button>
     <button class="btn rose" id="hud-connect">CONNECT WALLET</button>
   </div>
 
@@ -178,6 +185,11 @@
       <h3>THE LEDGER</h3>
       <div class="feed-list" id="feed"></div>
     </div>
+  </div>
+
+  <div class="minimap" id="minimap">
+    <canvas id="mini" width="200" height="100"></canvas>
+    <div class="cap">200 &times; 100 &middot; LIVE</div>
   </div>
 
   <div id="tip"></div>
@@ -333,9 +345,16 @@
       var sx = OX + x * CELL, sy = OY + y * CELL;
       var c = cells[x + ',' + y];
       if (!c) {
-        bctx.fillStyle = ((x + y) % 2) ? '#171c12' : '#191e14';
+        var base = ((x + y) % 2) ? '#171c12' : '#191e14';
+        if (heatOn) {
+          var m = posMult(x, y);
+          if (m >= 5) base = '#3d1210';
+          else if (m >= 3) base = '#2c1a10';
+          else if (m > 1) base = '#20200f';
+        }
+        bctx.fillStyle = base;
         bctx.fillRect(sx, sy, CELL - 1, CELL - 1);
-        bctx.fillStyle = '#232b1c'; bctx.fillRect(sx, sy, CELL - 1, 1);
+        bctx.fillStyle = heatOn && posMult(x, y) >= 5 ? '#e03a40' : '#232b1c'; bctx.fillRect(sx, sy, CELL - 1, 1);
         bctx.fillStyle = '#090c06'; bctx.fillRect(sx, sy + CELL - 2, CELL - 1, 1);
       } else if (c.kind === 'tomb') {
         bctx.fillStyle = '#0e120b'; bctx.fillRect(sx, sy, CELL - 1, CELL - 1);
@@ -349,12 +368,35 @@
         bctx.fillRect(sx + Math.floor((CELL - d) / 2), sy + Math.floor((CELL - d) / 2), d, d);
       }
     }
+    renderMini();
     // mode highlight ring
     if (mode) {
       bctx.strokeStyle = mode === 'mint' ? '#e03a40' : '#ffd23f';
       bctx.lineWidth = 2;
       bctx.strokeRect(OX - 3, OY - 3, CELL * W + 5, CELL * H + 5);
     }
+  }
+
+  /* ---------- heat toggle + minimap ---------- */
+  var heatOn = false;
+  var heatBtn = document.getElementById('heat-btn'), miniBox = document.getElementById('minimap');
+  var mini = document.getElementById('mini'), mctx = mini.getContext('2d');
+  heatBtn.addEventListener('click', function () {
+    heatOn = !heatOn;
+    heatBtn.classList.toggle('on', heatOn);
+    miniBox.classList.toggle('on', heatOn);
+    render();
+  });
+  function renderMini() {
+    if (!heatOn) return;
+    mctx.fillStyle = '#0b0e0a'; mctx.fillRect(0, 0, 200, 100);
+    for (var k in cells) {
+      var xy = k.split(','), c = cells[k];
+      mctx.fillStyle = c.kind === 'tomb' ? '#39412f' : TIER_COLORS[c.tier];
+      mctx.fillRect(+xy[0], +xy[1], 1, 1);
+    }
+    mctx.strokeStyle = '#e6e8e2'; mctx.lineWidth = 1;
+    mctx.strokeRect(-OX / CELL, -OY / CELL, innerWidth / CELL, innerHeight / CELL);
   }
 
   /* ---------- interaction ---------- */
