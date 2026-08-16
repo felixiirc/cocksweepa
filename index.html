@@ -89,6 +89,9 @@
     background: #2a0f0c; color: var(--rose-2); border: 1px solid #5c1518; cursor: pointer; flex: none; font-weight: 700; }
   .fe .mini-burn:hover { border-color: var(--rose-2); }
 
+  @keyframes cardshake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} }
+  .card.burning { animation: cardshake .12s linear 3; border-color: var(--rose-2); }
+
   /* tooltip */
   #tip { position: fixed; z-index: 70; pointer-events: none; background: #000; border: 1px solid var(--border-2);
     color: var(--ink-mid); font-size: 10px; padding: 4px 8px; display: none; letter-spacing: .08em; white-space: nowrap; }
@@ -168,6 +171,7 @@
         <button class="btn violet" id="paid-btn">+1 MORE · $5 (3 LEFT)</button>
         <button class="btn gold" id="summon-btn" disabled>SUMMON · 70K</button>
       </div>
+      <button class="btn violet wide" id="scan-btn" style="margin-top:8px">BURN A COCK · SCAN WALLET</button>
       <div class="mint-note">PICK A SEALED CELL AFTER PRESSING MINT<br>1 FREE PER IDENTITY · <b>ROBINHOOD CHAIN</b> · NO PRESALE</div>
     </div>
     <div class="panel feed">
@@ -494,8 +498,63 @@
     modal.classList.add('open');
   }
   document.getElementById('card-close').addEventListener('click', function () { modal.classList.remove('open'); });
+  var burning = false;
   document.getElementById('card-burn').addEventListener('click', function () {
-    if (cardCell) doBurn(cardCell.x, cardCell.y);
+    if (!cardCell || burning) return;
+    var btn = this;
+    burning = true;
+    btn.textContent = 'CONFIRM IN WALLET\u2026';
+    setTimeout(function () {
+      card.classList.add('burning');
+      burnAnim(function () {
+        card.classList.remove('burning');
+        btn.textContent = 'BURN FOR $COCK';
+        burning = false;
+        doBurn(cardCell.x, cardCell.y);
+      });
+    }, 700);
+  });
+  function burnAnim(cb) {
+    if (RM) return cb();
+    var cv = document.getElementById('card-spr'), ctx = cv.getContext('2d');
+    var img = ctx.getImageData(0, 0, 168, 168), parts = [];
+    for (var y = 0; y < 168; y += 6) for (var x = 0; x < 168; x += 6) {
+      var i = (y * 168 + x) * 4;
+      if (img.data[i] > 30 || img.data[i + 1] > 30 || img.data[i + 2] > 40)
+        parts.push({ x: x, y: y, vx: (Math.random() - .5) * 5, vy: -Math.random() * 5, l: 1 });
+    }
+    var EMB = ['#e03a40', '#ffd23f', '#7a3a2a'];
+    var t = 0;
+    (function frame() {
+      ctx.fillStyle = '#111610'; ctx.fillRect(0, 0, 168, 168);
+      parts.forEach(function (p) {
+        p.x += p.vx; p.y += p.vy; p.vy += .35; p.l -= .03;
+        if (p.l > 0) { ctx.globalAlpha = Math.max(p.l, 0); ctx.fillStyle = EMB[(Math.random() * 3) | 0]; ctx.fillRect(p.x, p.y, 5, 5); }
+      });
+      ctx.globalAlpha = 1;
+      if (++t < 34) requestAnimationFrame(frame); else cb();
+    })();
+  }
+  // Wallet scanner: on the live contracts this enumerates owned cocks on-chain;
+  // every living cock is always eligible — burning destroys the NFT, so no drained state exists.
+  document.getElementById('scan-btn').addEventListener('click', function () {
+    var owned = [];
+    for (var k in cells) if (cells[k].kind === 'alive' && cells[k].mine) owned.push(k);
+    addFeed({ n: 'WALLET SCANNED \u2014 ' + owned.length + ' COCK' + (owned.length === 1 ? '' : 'S') + ' ELIGIBLE',
+      m: owned.length ? 'every living cock still holds its full claim' : 'mint or buy one first', tier: 'common' });
+    owned.forEach(function (k) {
+      var xy = k.split(','), x = +xy[0], y = +xy[1], c = cells[k];
+      var d = document.createElement('div'); d.className = 'fe';
+      var cv = document.createElement('canvas'); cv.width = 28; cv.height = 28; cv.className = 'spr';
+      var cx = cv.getContext('2d'); cx.fillStyle = '#111610'; cx.fillRect(0, 0, 28, 28);
+      drawSprite(cx, c.tier === 'common' ? SPR.common : SPR.rooster, 0, 0, 28, TIER_COLORS[c.tier]);
+      var who = document.createElement('div'); who.className = 'who';
+      who.innerHTML = '<div class="n">COCK (' + x + ', ' + y + ')</div><div class="m">claim: ' + c.charge.toLocaleString('en-US') + ' $COCK</div>';
+      var b = document.createElement('button'); b.className = 'mini-burn'; b.textContent = 'BURN';
+      b.addEventListener('click', function () { showCard(x, y, c, false); });
+      d.appendChild(cv); d.appendChild(who); d.appendChild(b);
+      feed.insertBefore(d, feed.firstChild.nextSibling);
+    });
   });
   modal.addEventListener('click', function (e) { if (e.target === modal) modal.classList.remove('open'); });
 
