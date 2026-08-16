@@ -379,8 +379,9 @@
   }
 
   /* ---------- heat toggle + minimap ---------- */
-  var heatOn = false;
+  var heatOn = true;
   var heatBtn = document.getElementById('heat-btn'), miniBox = document.getElementById('minimap');
+  heatBtn.classList.add('on'); miniBox.classList.add('on');
   var mini = document.getElementById('mini'), mctx = mini.getContext('2d');
   heatBtn.addEventListener('click', function () {
     heatOn = !heatOn;
@@ -450,7 +451,9 @@
     var tier = rollTier();
     var c = { kind: 'alive', tier: tier, charge: chargeFor(tier, x, y), mine: true };
     cells[x + ',' + y] = c;
-    minted++; mode = null;
+    minted++;
+    // Stay in mint mode while the wallet still has mints left — no re-arming per pick.
+    mode = (freeLeft > 0 || paidLeft > 0) ? 'mint' : null;
     updateHud(); render();
     addFeed({ n: 'YOU MINTED (' + x + ', ' + y + ')', m: c.charge.toLocaleString('en-US') + ' $COCK inside', tier: tier });
     showCard(x, y, c, true);
