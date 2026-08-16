@@ -184,7 +184,7 @@
       <h2 id="card-name">COCK</h2>
       <div class="coords" id="card-coords">(00, 00)</div>
       <span class="tag common" id="card-tag">COMMON</span>
-      <div class="charge" id="card-charge">CHARGE: <b>68,300 $COCK</b></div>
+      <div class="charge" id="card-charge">STUFFING: <b>68,300 $COCK</b></div>
       <div class="mult" id="card-mult">POSITION: 1.0X</div>
       <div class="row">
         <button class="btn violet" id="card-close">KEEP IT</button>
@@ -488,7 +488,7 @@
     document.getElementById('card-coords').textContent = '(' + x + ', ' + y + ') · THE SHAFTLANDS';
     var tag = document.getElementById('card-tag');
     tag.className = 'tag ' + c.tier; tag.textContent = c.tier.toUpperCase();
-    document.getElementById('card-charge').innerHTML = 'CHARGE: <b>' + c.charge.toLocaleString('en-US') + ' $COCK</b>';
+    document.getElementById('card-charge').innerHTML = x + c.charge.toLocaleString('en-US') + ' $COCK</b>';
     var m = c.tier === 'common' ? posMult(x, y) : 1;
     document.getElementById('card-mult').textContent = m > 1 ? 'POSITION: ' + m + 'X CELL' : 'POSITION: STANDARD CELL';
     modal.classList.add('open');
